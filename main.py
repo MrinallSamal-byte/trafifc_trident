@@ -70,7 +70,8 @@ def main():
     running = True
     spawn_rate = SPAWN_RATE_MEDIUM
 
-    print("\n🚦 Traffic-Mind is running!")
+    print("👋 Hello! Welcome to Traffic-Mind!")
+    print("🚦 Traffic-Mind is running!")
     print("   [1] Timer  [2] Smart  [3] AI  [R] Reset  [+/-] Density  [H] Hardware\n")
 
     while running:

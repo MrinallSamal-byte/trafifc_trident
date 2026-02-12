@@ -132,7 +132,7 @@ def run_demo():
     # ACT 1: THE PROBLEM
     # ═══════════════════════════════════════
     show_title_card("Act 1: The Problem", "Fixed-timer traffic lights cause jams", 3)
-    timer_stats = run_phase(timer_ctrl, "Timer (Dumb)", 30)
+    timer_stats = run_phase(timer_ctrl, "Timer (Dumb)", 45)
 
     # ═══════════════════════════════════════
     # TRANSITION
@@ -143,7 +143,7 @@ def run_demo():
     # ACT 2: THE SOLUTION
     # ═══════════════════════════════════════
     show_title_card("Act 2: AI Takes Control 🤖", "Deep Q-Network Reinforcement Learning", 3)
-    ai_stats = run_phase(ai_ctrl, ai_label, 30)
+    ai_stats = run_phase(ai_ctrl, ai_label, 45)
 
     # ═══════════════════════════════════════
     # ACT 3: THE RESULTS
