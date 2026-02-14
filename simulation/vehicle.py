@@ -353,7 +353,8 @@ class Vehicle:
 
         # Emergency vehicles get a stripe
         if self.is_emergency:
-            stripe_width = max(3, self.width // 4)
+            MIN_STRIPE_WIDTH = 3
+            stripe_width = max(MIN_STRIPE_WIDTH, self.width // 4)
             if self.direction in (Direction.NORTH, Direction.SOUTH):
                 stripe_rect = pygame.Rect(
                     self.rect.x + (self.width - stripe_width) // 2,
@@ -371,7 +372,7 @@ class Vehicle:
             pygame.draw.rect(screen, EMERGENCY_STRIPE_COLOR, stripe_rect)
 
         # Border for definition
-        border_color = (max(0, self.color[0] - 40), max(0, self.color[1] - 40), max(0, self.color[2] - 40))
+        border_color = tuple(max(0, c - 40) for c in self.color)
         pygame.draw.rect(screen, border_color, self.rect, width=1, border_radius=3)
 
 
