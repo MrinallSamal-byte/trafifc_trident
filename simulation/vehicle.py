@@ -399,6 +399,14 @@ class VehicleSpawner:
         self.intersection = intersection
         self.spawn_rate = spawn_rate
 
+    def set_rate(self, new_rate: float) -> None:
+        """Update the spawn rate dynamically.
+        
+        Args:
+            new_rate: New probability per frame per direction to spawn a vehicle
+        """
+        self.spawn_rate = new_rate
+
     def should_spawn(self) -> bool:
         """Random check against spawn rate."""
         return random.random() < self.spawn_rate
