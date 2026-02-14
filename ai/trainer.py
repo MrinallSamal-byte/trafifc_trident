@@ -40,6 +40,7 @@ class DQNTrainer:
         self.replay_buffer = ReplayBuffer(MEMORY_SIZE)
         self.epsilon = EPSILON_START
         self.steps_done = 0
+        self.last_loss = 0.0
 
     # ─── action selection ─────────────────
     def select_action(self, state) -> int:
@@ -72,6 +73,7 @@ class DQNTrainer:
             target_q = rewards + GAMMA * next_q * (1 - dones)
 
         loss = nn.MSELoss()(q_values, target_q)
+        self.last_loss = loss.item()
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -156,6 +158,7 @@ class DQNTrainer:
                     f"Reward: {total_reward:7.1f} | "
                     f"Avg(10): {avg:7.1f} | "
                     f"Epsilon: {self.epsilon:.3f} | "
+                    f"Loss: {self.last_loss:.4f} | "
                     f"Throughput: {tp:4d} | "
                     f"Avg Wait: {aw:5.1f}"
                 )

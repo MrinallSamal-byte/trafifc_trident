@@ -12,7 +12,7 @@ from config.settings import (
     SPAWN_RATE_HIGH,
     REWARD_CAR_PASSED, PENALTY_CAR_WAITING,
     PENALTY_LONG_WAIT, LONG_WAIT_THRESHOLD,
-    PENALTY_SWITCH,
+    PENALTY_SWITCH, PENALTY_COLLISION,
     REWARD_THROUGHPUT_BONUS, THROUGHPUT_BONUS_THRESHOLD,
     MAX_GREEN_DURATION,
     INTERSECTION_TOP, INTERSECTION_BOTTOM,
@@ -153,6 +153,12 @@ class TrafficEnvironment:
                     reward += PENALTY_CAR_WAITING
                     if v.wait_time > LONG_WAIT_THRESHOLD:
                         reward += PENALTY_LONG_WAIT
+
+            # Collision penalty — penalise overlapping vehicles
+            for v in self.vehicles:
+                front_dist = v.check_front_vehicle(v.lane.vehicles)
+                if front_dist is not None and front_dist <= 0:
+                    reward += PENALTY_COLLISION
 
         # Throughput bonus
         if passed_this_step >= THROUGHPUT_BONUS_THRESHOLD:

@@ -64,7 +64,7 @@ SPAWN_RATE_LOW = 0.02
 SPAWN_RATE_MEDIUM = 0.05
 SPAWN_RATE_HIGH = 0.08
 MAX_VEHICLES = 200
-SAFE_DISTANCE = 10  # minimum gap between cars (pixels)
+SAFE_DISTANCE = 40  # minimum gap between cars (pixels)
 
 # ─────────────────────────────────────────────
 # TRAFFIC LIGHTS
@@ -109,6 +109,7 @@ PENALTY_CAR_WAITING = -0.1
 PENALTY_LONG_WAIT = -0.5
 LONG_WAIT_THRESHOLD = 200   # frames
 PENALTY_SWITCH = -0.2
+PENALTY_COLLISION = -10.0   # heavy penalty for overlapping cars
 REWARD_THROUGHPUT_BONUS = 2.0
 THROUGHPUT_BONUS_THRESHOLD = 5  # cars per decision interval
 

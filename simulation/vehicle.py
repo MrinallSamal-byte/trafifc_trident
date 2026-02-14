@@ -141,15 +141,31 @@ class Vehicle:
         dist_stop = self._distance_to_stop_line()
         front_dist = self.check_front_vehicle(self.lane.vehicles)
 
-        # ── Follow car ahead ──
-        if front_dist is not None and front_dist < SAFE_DISTANCE + 5:
-            self.speed = max(0, self.speed - 0.3)
-            if front_dist <= SAFE_DISTANCE:
+        # ── Follow car ahead (smooth deceleration) ──
+        if front_dist is not None and front_dist < SAFE_DISTANCE * 2:
+            if front_dist <= 0:
+                # Overlap detected – stop immediately and push back
                 self.speed = 0
+                self._correct_overlap(front_dist)
                 self.state = VehicleState.WAITING
                 self.wait_time += 1
                 self._update_rect()
                 return
+            elif front_dist <= SAFE_DISTANCE:
+                # Within safe distance – scale speed toward zero
+                ratio = max(0.0, front_dist / SAFE_DISTANCE)
+                self.speed = max(0, self.speed * ratio * 0.5)
+                if self.speed < 0.1:
+                    self.speed = 0
+                    self.state = VehicleState.WAITING
+                    self.wait_time += 1
+                    self._update_rect()
+                    return
+            else:
+                # Approaching safe distance – gentle deceleration
+                ratio = (front_dist - SAFE_DISTANCE) / SAFE_DISTANCE
+                target_speed = self.max_speed * min(1.0, ratio)
+                self.speed = max(0, self.speed - max(0.2, self.speed - target_speed))
 
         # ── Red / yellow light behaviour ──
         if not self._past_stop_line() and not self._in_intersection_zone():
@@ -157,9 +173,9 @@ class Vehicle:
                 if light_is_yellow and dist_stop < 40:
                     # Close to stop line on yellow → keep going
                     pass
-                elif dist_stop < 60:
+                elif dist_stop < 80:
                     # Decelerate as we approach
-                    decel = max(0.1, dist_stop / 60) * self.max_speed
+                    decel = max(0.1, dist_stop / 80) * self.max_speed
                     self.speed = max(0, min(self.speed, decel))
                     if dist_stop < 5:
                         self.speed = 0
@@ -197,6 +213,19 @@ class Vehicle:
     def _update_rect(self):
         self.rect.x = int(self.x - self.width / 2)
         self.rect.y = int(self.y - self.height / 2)
+
+    def _correct_overlap(self, front_dist):
+        """Push this vehicle back so it no longer overlaps the vehicle ahead."""
+        pushback = abs(front_dist) + 2  # small extra buffer
+        if self.direction == Direction.NORTH:
+            self.y += pushback
+        elif self.direction == Direction.SOUTH:
+            self.y -= pushback
+        elif self.direction == Direction.EAST:
+            self.x -= pushback
+        elif self.direction == Direction.WEST:
+            self.x += pushback
+        self._update_rect()
 
     # ─── despawn check ─────────────────────
     def has_crossed(self) -> bool:

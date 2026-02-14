@@ -46,11 +46,18 @@ def main():
     smart_ctrl = RuleBasedController(vehicles)
 
     dqn_ctrl = None
+    dqn_model_available = False
     try:
         dqn_ctrl = DQNController(vehicles, model_path="models/best_model.pth")
+        dqn_model_available = True
         print("✅ Trained DQN model loaded!")
-    except Exception:
-        print("⚠️  No trained model found. Train first with: python train.py")
+    except FileNotFoundError:
+        # No trained model yet — initialise with random weights
+        try:
+            dqn_ctrl = DQNController(vehicles, model_path=None)
+            print("⚠️  No trained model found. AI mode uses random weights. Train with: python train.py")
+        except Exception:
+            print("⚠️  DQN controller could not be initialised.")
 
     active_controller = timer_ctrl
     mode_name = "Timer (Dumb)"
@@ -93,11 +100,16 @@ def main():
                     dashboard.set_controller_name(mode_name)
                     print("Switched to SMART mode")
 
-                elif event.key == pygame.K_3 and dqn_ctrl:
-                    active_controller = dqn_ctrl
-                    mode_name = "AI (DQN)"
-                    dashboard.set_controller_name(mode_name)
-                    print("🤖 Switched to AI mode!")
+                elif event.key == pygame.K_3:
+                    if dqn_ctrl:
+                        active_controller = dqn_ctrl
+                        mode_name = "AI (DQN)"
+                        if not dqn_model_available:
+                            mode_name = "AI (DQN - untrained)"
+                        dashboard.set_controller_name(mode_name)
+                        print("🤖 Switched to AI mode!")
+                    else:
+                        print("⚠️  AI controller not available. Train first with: python train.py")
 
                 elif event.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
                     spawn_rate = min(spawn_rate + 0.01, 0.10)
