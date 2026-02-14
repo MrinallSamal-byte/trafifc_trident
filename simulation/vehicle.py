@@ -403,6 +403,10 @@ class VehicleSpawner:
         """Random check against spawn rate."""
         return random.random() < self.spawn_rate
 
+    def set_rate(self, spawn_rate: float) -> None:
+        """Update spawn probability used for future spawn checks."""
+        self.spawn_rate = spawn_rate
+
     def spawn_vehicle(self, direction: Direction, lane, is_emergency: bool = False) -> Vehicle:
         """
         Create a new vehicle at the lane's starting position.

@@ -23,7 +23,7 @@ from simulation.collision import (
     CollisionManager,
     MoveProposal,
 )
-from simulation.vehicle import Vehicle, VehicleState
+from simulation.vehicle import Vehicle, VehicleState, VehicleSpawner
 from simulation.road_network import Intersection
 
 
@@ -345,6 +345,13 @@ def test_environment_step_no_crash():
     assert next_state.shape == (12,)
     assert "collisions" in info
     env.close()
+
+
+def test_vehicle_spawner_set_rate_updates_spawn_rate():
+    intersection = Intersection()
+    spawner = VehicleSpawner(intersection, spawn_rate=0.05)
+    spawner.set_rate(0.08)
+    assert spawner.spawn_rate == 0.08
 
 
 def test_environment_100_steps_zero_overlaps():
