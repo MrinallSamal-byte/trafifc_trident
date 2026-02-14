@@ -204,6 +204,8 @@ class CollisionManager:
                         "Collision: V%d vs V%d → V%d rejected",
                         pi.vehicle.id, pj.vehicle.id, loser.vehicle.id,
                     )
+                    if loser is pi:
+                        break
 
     def _resolve_against_rejected(self, proposals: List[MoveProposal]) -> None:
         """

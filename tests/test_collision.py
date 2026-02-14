@@ -125,6 +125,51 @@ def test_collision_blocks_lower_priority():
     assert mgr.collision_count > 0
 
 
+def test_rejected_proposal_does_not_reject_others_in_pairwise_loop():
+    """Once a proposal is rejected, it must not keep rejecting later proposals."""
+    intersection = Intersection()
+    lane = _get_lane(intersection, Direction.NORTH, 0)
+
+    v_j = _make_vehicle(Direction.NORTH, lane, 300, 400)
+    v_i = _make_vehicle(Direction.NORTH, lane, 301, 401)
+    v_k = _make_vehicle(Direction.NORTH, lane, 302, 402)
+
+    # List order is [i, j, k]. Since v_i is created after v_j, tie-break makes i lose.
+    p_i = MoveProposal(
+        vehicle=v_i,
+        next_x=100,
+        next_y=100,
+        next_rect=pygame.Rect(95, 95, 10, 10),
+        next_speed=2.0,
+        next_state=VehicleState.MOVING,
+    )
+    p_j = MoveProposal(
+        vehicle=v_j,
+        next_x=88,
+        next_y=100,
+        next_rect=pygame.Rect(83, 95, 10, 10),
+        next_speed=2.0,
+        next_state=VehicleState.MOVING,
+    )
+    p_k = MoveProposal(
+        vehicle=v_k,
+        next_x=117,
+        next_y=100,
+        next_rect=pygame.Rect(112, 95, 10, 10),
+        next_speed=2.0,
+        next_state=VehicleState.MOVING,
+    )
+
+    mgr = CollisionManager()
+    approved, rejected = mgr.validate_all([p_i, p_j, p_k], intersection.conflict_zone)
+
+    approved_ids = {p.vehicle.id for p in approved}
+    rejected_ids = {p.vehicle.id for p in rejected}
+    assert v_i.id in rejected_ids, "First conflicting loser should be rejected"
+    assert v_j.id in approved_ids, "Winner should stay approved"
+    assert v_k.id in approved_ids, "Later proposal should not be rejected by an already rejected one"
+
+
 def test_emergency_vehicle_gets_priority():
     """Emergency vehicle should win conflict resolution."""
     intersection = Intersection()
