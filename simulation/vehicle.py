@@ -15,6 +15,10 @@ from config.settings import (
     CAR_SPEED_MAX,
     CAR_COLORS,
     SAFE_DISTANCE,
+    KICKSTART_SPEED,
+    ACCELERATION_RATE,
+    RESUME_THRESHOLD,
+    RESUME_SPEED_FACTOR,
     EMERGENCY_COLOR,
     EMERGENCY_STRIPE_COLOR,
     EMERGENCY_SPEED,
@@ -145,8 +149,8 @@ class Vehicle:
                 # Within safe distance — scale speed toward zero
                 ratio = max(0.0, front_dist / SAFE_DISTANCE)
                 # FIX: If currently stopped (speed=0), give a minimum kick-start
-                if self.speed == 0 and ratio > 0.3:
-                    next_speed = self.max_speed * ratio * 0.3
+                if self.speed == 0 and ratio > RESUME_THRESHOLD:
+                    next_speed = self.max_speed * ratio * RESUME_SPEED_FACTOR
                 else:
                     next_speed = max(0, next_speed * ratio * 0.5)
                 if next_speed < 0.1:
@@ -179,9 +183,9 @@ class Vehicle:
         if not should_stop and next_speed < self.max_speed:
             if self.speed == 0 and next_speed == 0:
                 # Vehicle was stopped and no immediate obstacles — resume with stronger kick
-                next_speed = min(self.max_speed, 0.5)
+                next_speed = min(self.max_speed, KICKSTART_SPEED)
             else:
-                next_speed = min(self.max_speed, next_speed + 0.15)
+                next_speed = min(self.max_speed, next_speed + ACCELERATION_RATE)
 
         # ── Determine state ──
         if should_stop or next_speed <= 0:
