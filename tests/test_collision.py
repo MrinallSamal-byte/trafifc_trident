@@ -131,10 +131,10 @@ def test_rejected_proposal_does_not_reject_others_in_pairwise_loop():
     lane = _get_lane(intersection, Direction.NORTH, 0)
 
     v_j = _make_vehicle(Direction.NORTH, lane, 300, 400)
-    v_i = _make_vehicle(Direction.NORTH, lane, 300, 400)
-    v_k = _make_vehicle(Direction.NORTH, lane, 300, 400)
+    v_i = _make_vehicle(Direction.NORTH, lane, 301, 401)
+    v_k = _make_vehicle(Direction.NORTH, lane, 302, 402)
 
-    # List order is [i, j, k]. i loses to j (higher ID), but k should remain.
+    # List order is [i, j, k]. Since v_i is created after v_j, tie-break makes i lose.
     p_i = MoveProposal(
         vehicle=v_i,
         next_x=100,
