@@ -215,6 +215,71 @@ def test_propose_reject_pipeline():
     assert v.state == VehicleState.WAITING
 
 
+def test_vehicle_resumes_after_rejection():
+    """Vehicle should resume moving after its proposal is rejected and the
+    blocking vehicle moves away (i.e. speed must recover from zero)."""
+    intersection = Intersection()
+    lane = _get_lane(intersection, Direction.NORTH, 0)
+    v = _make_vehicle(Direction.NORTH, lane, 300, 700)
+
+    # 1. Normal propose → reject (simulates stopping for cross-traffic)
+    _ = v.propose_move(light_is_green=True, light_is_yellow=False)
+    v.reject_move()
+    assert v.speed == 0, "Vehicle should be stopped after rejection"
+
+    # 2. On the next frame, with no obstacles, the vehicle should propose
+    #    a move with positive speed (i.e. it resumes)
+    proposal = v.propose_move(light_is_green=True, light_is_yellow=False)
+    assert proposal.next_speed > 0, (
+        "Vehicle with speed=0 should propose positive speed when unblocked"
+    )
+    v.commit_move(proposal)
+    assert v.speed > 0, "Vehicle should have resumed moving"
+    assert v.state != VehicleState.WAITING, "Vehicle should no longer be WAITING"
+
+
+def test_vehicle_resumes_after_front_vehicle_leaves():
+    """Vehicle stopped behind another should resume when the front car moves
+    far enough away."""
+    intersection = Intersection()
+    lane = _get_lane(intersection, Direction.NORTH, 0)
+
+    # Front vehicle far ahead; back vehicle was previously rejected (speed=0)
+    v_front = _make_vehicle(Direction.NORTH, lane, 300, 600)
+    v_back = _make_vehicle(Direction.NORTH, lane, 300, 700)
+    lane.vehicles.extend([v_front, v_back])
+
+    # Simulate previous rejection
+    v_back.speed = 0
+    v_back.state = VehicleState.WAITING
+
+    # Front vehicle is 100px ahead (> 2*SAFE_DISTANCE=80), should not impede
+    proposal = v_back.propose_move(light_is_green=True, light_is_yellow=False)
+    assert proposal.next_speed > 0, (
+        "Back vehicle should propose positive speed when front is far away"
+    )
+
+    # Now test with front vehicle within SAFE_DISTANCE but not too close
+    lane.vehicles.clear()
+    v_front2 = _make_vehicle(Direction.NORTH, lane, 300, 670)
+    v_back2 = _make_vehicle(Direction.NORTH, lane, 300, 700)
+    lane.vehicles.extend([v_front2, v_back2])
+    v_back2.speed = 0
+    v_back2.state = VehicleState.WAITING
+
+    # front_dist = 700 - 655 - 15 - 15 = 15, within SAFE_DISTANCE but > 0.25*SAFE_DISTANCE
+    v_front2.y = 655
+    v_front2._update_rect()
+
+    proposal2 = v_back2.propose_move(light_is_green=True, light_is_yellow=False)
+    # front_dist = 15, ratio = 15/40 = 0.375
+    # next_speed = max_speed * 0.375 * 0.5 > 0
+    assert proposal2.next_speed > 0, (
+        "Back vehicle should propose positive speed even when starting from 0, "
+        "if front vehicle is within SAFE_DISTANCE but not too close"
+    )
+
+
 def test_assert_no_overlaps_clean():
     """assert_no_overlaps should pass for well-separated vehicles."""
     intersection = Intersection()
@@ -320,6 +385,8 @@ if __name__ == "__main__":
         test_intersection_cap,
         test_propose_commit_pipeline,
         test_propose_reject_pipeline,
+        test_vehicle_resumes_after_rejection,
+        test_vehicle_resumes_after_front_vehicle_leaves,
         test_assert_no_overlaps_clean,
         test_count_overlaps,
         test_perpendicular_collision,
