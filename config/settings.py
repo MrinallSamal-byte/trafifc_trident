@@ -66,6 +66,12 @@ SPAWN_RATE_HIGH = 0.08
 MAX_VEHICLES = 200
 SAFE_DISTANCE = 40  # minimum gap between cars (pixels)
 
+# Vehicle physics constants for stop-and-go behavior
+KICKSTART_SPEED = 0.5      # Initial speed when resuming from stopped state
+ACCELERATION_RATE = 0.15   # Speed increment per frame when accelerating
+RESUME_THRESHOLD = 0.3     # Front vehicle distance ratio threshold for resuming
+RESUME_SPEED_FACTOR = 0.3  # Speed multiplier when resuming from stopped state
+
 # ─────────────────────────────────────────────
 # TRAFFIC LIGHTS
 # ─────────────────────────────────────────────
