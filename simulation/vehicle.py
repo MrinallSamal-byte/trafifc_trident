@@ -191,7 +191,7 @@ class Vehicle:
                 if next_speed > target_speed:
                     next_speed = max(0, next_speed - max(0.2, next_speed - target_speed))
                 else:
-                    next_speed = target_speed
+                    next_speed = min(target_speed, next_speed + 0.15)
 
         # ── Red / yellow light behaviour ──
         if not should_stop and not self._past_stop_line() and not self._in_intersection_zone():

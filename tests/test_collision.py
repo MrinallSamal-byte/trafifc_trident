@@ -267,7 +267,7 @@ def test_vehicle_resumes_after_front_vehicle_leaves():
     v_back2.speed = 0
     v_back2.state = VehicleState.WAITING
 
-    # front_dist = 700 - 655 - 15 - 15 = 15, within SAFE_DISTANCE but > 0.25*SAFE_DISTANCE
+    # front_dist = 700 - 655 - 15 - 15 = 15, within SAFE_DISTANCE but above hard-stop threshold
     v_front2.y = 655
     v_front2._update_rect()
 
