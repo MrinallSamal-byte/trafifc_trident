@@ -56,8 +56,8 @@ def main():
         try:
             dqn_ctrl = DQNController(vehicles, model_path=None)
             print("⚠️  No trained model found. AI mode uses random weights. Train with: python train.py")
-        except Exception:
-            print("⚠️  DQN controller could not be initialised.")
+        except Exception as e:
+            print(f"⚠️  DQN controller could not be initialised: {e}")
 
     active_controller = timer_ctrl
     mode_name = "Timer (Dumb)"
