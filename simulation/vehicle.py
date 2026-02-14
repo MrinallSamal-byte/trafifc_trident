@@ -179,7 +179,7 @@ class Vehicle:
             elif front_dist <= SAFE_DISTANCE:
                 # Within safe distance — scale speed toward zero
                 ratio = max(0.0, front_dist / SAFE_DISTANCE)
-                next_speed = max(0, next_speed * ratio * 0.5)
+                next_speed = max(0, self.max_speed * ratio * 0.5)
                 if next_speed < 0.1:
                     next_speed = 0
                     next_state = VehicleState.WAITING
@@ -188,7 +188,10 @@ class Vehicle:
                 # Approaching safe distance — gentle deceleration
                 ratio = (front_dist - SAFE_DISTANCE) / SAFE_DISTANCE
                 target_speed = self.max_speed * min(1.0, ratio)
-                next_speed = max(0, next_speed - max(0.2, next_speed - target_speed))
+                if next_speed > target_speed:
+                    next_speed = max(0, next_speed - max(0.2, next_speed - target_speed))
+                else:
+                    next_speed = min(target_speed, next_speed + 0.15)
 
         # ── Red / yellow light behaviour ──
         if not should_stop and not self._past_stop_line() and not self._in_intersection_zone():
