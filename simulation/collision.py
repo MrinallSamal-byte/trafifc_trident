@@ -200,6 +200,8 @@ class CollisionManager:
                     self._collision_count += 1
                     loser = self._pick_loser(pi, pj)
                     loser.approved = False
+                    if loser is pi:
+                        break
                     logger.debug(
                         "Collision: V%d vs V%d → V%d rejected",
                         pi.vehicle.id, pj.vehicle.id, loser.vehicle.id,
