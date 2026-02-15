@@ -46,8 +46,9 @@ INTERSECTION_BOTTOM = INTERSECTION_CENTER_Y + ROAD_WIDTH
 # ─────────────────────────────────────────────
 CAR_LENGTH = 30
 CAR_WIDTH = 18
-CAR_SPEED_MIN = 2.0
-CAR_SPEED_MAX = 4.0
+CAR_SPEED_MIN = 3.0
+CAR_SPEED_MIN = 3.0
+CAR_SPEED_MAX = 5.0
 CAR_COLORS = [
     (41, 128, 185),   # Blue
     (231, 76, 60),    # Red
@@ -60,25 +61,28 @@ CAR_COLORS = [
     (243, 156, 18),   # Amber
     (192, 57, 43),    # Dark red
 ]
-SPAWN_RATE_LOW = 0.02
-SPAWN_RATE_MEDIUM = 0.05
-SPAWN_RATE_HIGH = 0.08
+SPAWN_RATE_LOW = 0.005
+SPAWN_RATE_MEDIUM = 0.012
+SPAWN_RATE_HIGH = 0.03
 MAX_VEHICLES = 200
-SAFE_DISTANCE = 40  # minimum gap between cars (pixels)
+MAX_QUEUE_PER_DIRECTION = 25  # stop spawning if this many vehicles in one direction
+SAFE_DISTANCE = 28  # minimum gap between cars (pixels)
 
 # Vehicle physics constants for stop-and-go behavior
-KICKSTART_SPEED = 0.5      # Initial speed when resuming from stopped state
-ACCELERATION_RATE = 0.15   # Speed increment per frame when accelerating
-RESUME_THRESHOLD = 0.3     # Front vehicle distance ratio threshold for resuming
-RESUME_SPEED_FACTOR = 0.3  # Speed multiplier when resuming from stopped state
+# Vehicle physics constants for stop-and-go behavior
+KICKSTART_SPEED = 1.0      # Lower kickstart for smoother start
+ACCELERATION_RATE = 0.15   # Slower acceleration to prevent jerks
+RESUME_THRESHOLD = 0.1     # Keep snappy resume
+RESUME_SPEED_FACTOR = 0.4  # Gentle resume
+JAM_TIMEOUT = 300          # Frames (5s) before force-clearing a stuck car
 
 # ─────────────────────────────────────────────
 # TRAFFIC LIGHTS
 # ─────────────────────────────────────────────
-GREEN_DURATION_TIMER = 90      # frames – fixed-timer controller
+GREEN_DURATION_TIMER = 300      # frames – fixed-timer controller
 YELLOW_DURATION = 30           # frames
-MIN_GREEN_DURATION = 30        # frames – AI / rule-based
-MAX_GREEN_DURATION = 180       # frames
+MIN_GREEN_DURATION = 60        # frames – AI / rule-based
+MAX_GREEN_DURATION = 300       # frames
 LIGHT_RADIUS = 12
 
 # Colours
@@ -162,6 +166,6 @@ CO2_MOVING_RATE = 0.0023  # kg CO2 per frame per moving vehicle
 # ─────────────────────────────────────────────
 # COLLISION DETECTION
 # ─────────────────────────────────────────────
-COLLISION_SAFE_MARGIN = 4          # extra pixels around bounding box for safe distance
-INTERSECTION_MAX_OCCUPANTS = 6     # max vehicles allowed in intersection simultaneously
+COLLISION_SAFE_MARGIN = 1          # extra pixels around bounding box for safe distance
+INTERSECTION_MAX_OCCUPANTS = 20    # max vehicles allowed in intersection simultaneously
 COLLISION_DEBUG_ASSERTIONS = True   # enable overlap logging (disable for max perf)

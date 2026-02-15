@@ -140,20 +140,21 @@ class Vehicle:
         should_stop = False
 
         if front_dist is not None and front_dist < SAFE_DISTANCE * 2:
-            if front_dist <= SAFE_DISTANCE * 0.25:
-                # Very close — hard stop, do NOT move
+            if front_dist <= SAFE_DISTANCE * 0.1:
+                # Extremely close — hard stop to avoid rear-end collision
                 next_speed = 0
                 next_state = VehicleState.WAITING
                 should_stop = True
             elif front_dist <= SAFE_DISTANCE:
-                # Within safe distance — scale speed toward zero
+                # Within safe distance — match speed proportionally
                 ratio = max(0.0, front_dist / SAFE_DISTANCE)
-                # FIX: If currently stopped (speed=0), give a minimum kick-start
+                # If currently stopped (speed=0), give a kick-start when there's room
                 if self.speed == 0 and ratio > RESUME_THRESHOLD:
                     next_speed = self.max_speed * ratio * RESUME_SPEED_FACTOR
                 else:
-                    next_speed = max(0, next_speed * ratio * 0.5)
-                if next_speed < 0.1:
+                    # Smooth linear deceleration — don't compound with current speed
+                    next_speed = self.max_speed * ratio * 0.8
+                if next_speed < 0.05:
                     next_speed = 0
                     next_state = VehicleState.WAITING
                     should_stop = True
@@ -161,13 +162,16 @@ class Vehicle:
                 # Approaching safe distance — gentle deceleration
                 ratio = (front_dist - SAFE_DISTANCE) / SAFE_DISTANCE
                 target_speed = self.max_speed * min(1.0, ratio)
-                next_speed = max(0, next_speed - max(0.2, next_speed - target_speed))
+                next_speed = max(target_speed, next_speed * 0.9)
 
         # ── Red / yellow light behaviour ──
+        slowing_for_light = False
         if not should_stop and not self._past_stop_line() and not self._in_intersection_zone():
             if not light_is_green:
+                slowing_for_light = True
                 if light_is_yellow and dist_stop < 40:
                     # Close to stop line on yellow → keep going
+                    slowing_for_light = False
                     pass
                 elif dist_stop < 80:
                     # Decelerate as we approach
@@ -177,10 +181,46 @@ class Vehicle:
                         next_speed = 0
                         next_state = VehicleState.WAITING
                         should_stop = True
+            
+            # ── DON'T BLOCK THE BOX ──
+            # Even if light is GREEN, don't enter if we can't clear the intersection!
+            elif light_is_green and dist_stop < 20:
+                # We are about to enter the intersection. Check if there is space on the other side.
+                # Intersection span is typically ~160px. We want at least (Intersection + Car + Margin) clear.
+                required_clearance = (INTERSECTION_BOTTOM - INTERSECTION_TOP) + self.height + SAFE_DISTANCE
+                
+                if front_dist is not None and front_dist < required_clearance:
+                    # The car ahead is blocking the exit or is just inside the intersection.
+                    # Stop here to keep the intersection clear for cross traffic.
+                    next_speed = 0
+                    next_state = VehicleState.WAITING
+                    should_stop = True
+
+        # ── JAM BUSTER FAILSAFE ──
+        # If vehicle has been waiting too long but path seems clear (no car ahead), force resume.
+        if self.state == VehicleState.WAITING and self.wait_time > 150:
+            # 150 frames = 2.5 seconds (Faster recovery)
+            # from config.settings import SAFE_DISTANCE, KICKSTART_SPEED  <-- REMOVED
+            dist_to_front = self.check_front_vehicle(self.lane.vehicles)
+            
+            # If no car ahead OR car ahead is far away
+            if dist_to_front is None or dist_to_front > SAFE_DISTANCE * 2:
+                # But check if we are stopped at a RED light
+                if not light_is_green and not self._past_stop_line() and not self._in_intersection_zone() and dist_stop < 10:
+                    # Correctly stopped at red light — do nothing
+                    pass
+                else:
+                    # We are stuck for no good reason (phantom jam) -> Force move
+                    should_stop = False
+                    next_state = VehicleState.MOVING
+                    next_speed = KICKSTART_SPEED
+                    # Reset wait time so we don't trigger this every frame if it persists
+                    self.wait_time = 0
 
         # ── Accelerate toward max speed ──
         # FIX: If stopped and no obstacles, give a stronger initial acceleration
-        if not should_stop and next_speed < self.max_speed:
+        # Only accelerate if we are NOT intentionally slowing for a red light
+        if not should_stop and not slowing_for_light and next_speed < self.max_speed:
             if self.speed == 0 and next_speed == 0:
                 # Vehicle was stopped and no immediate obstacles — resume with stronger kick
                 next_speed = min(self.max_speed, KICKSTART_SPEED)
@@ -447,18 +487,28 @@ class VehicleSpawner:
     def try_spawn_all_directions(self, vehicles_list: list) -> None:
         """
         Attempt to spawn vehicles in all directions.
+        Respects per-direction queue caps to prevent congestion buildup.
         
         Args:
             vehicles_list: Global list to add new vehicles to
         """
-        from config.settings import EMERGENCY_SPAWN_RATE, MAX_VEHICLES
+        from config.settings import EMERGENCY_SPAWN_RATE, MAX_VEHICLES, MAX_QUEUE_PER_DIRECTION
         
         # Don't spawn if at vehicle limit
         if len(vehicles_list) >= MAX_VEHICLES:
             return
         
+        # Count vehicles per direction for queue-aware spawning
+        dir_counts = {d: 0 for d in Direction}
+        for v in vehicles_list:
+            dir_counts[v.direction] += 1
+        
         # Try spawning in each direction
         for direction in Direction:
+            # Skip if queue is already at capacity for this direction
+            if dir_counts[direction] >= MAX_QUEUE_PER_DIRECTION:
+                continue
+            
             # Check if we should spawn
             if not self.should_spawn():
                 continue

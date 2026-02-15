@@ -61,8 +61,8 @@ def main():
         except Exception as e:
             print(f"⚠️  DQN controller could not be initialised: {e}")
 
-    active_controller = timer_ctrl
-    mode_name = "Timer (Dumb)"
+    active_controller = smart_ctrl
+    mode_name = "Smart (Rule-Based)"
     dashboard.set_controller_name(mode_name)
 
     # ── Arduino ──────────────────────────────

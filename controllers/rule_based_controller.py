@@ -51,7 +51,7 @@ class RuleBasedController(TrafficLightController):
     def _count_waiting(self, direction: Direction) -> int:
         return sum(
             1 for v in self.vehicles_ref
-            if v.direction == direction and v.state == VehicleState.WAITING
+            if v.direction == direction and (v.state == VehicleState.WAITING or v.state == VehicleState.MOVING)
         )
 
     def _avg_wait(self, direction: Direction) -> float:
@@ -61,8 +61,19 @@ class RuleBasedController(TrafficLightController):
         ]
         return (sum(waits) / len(waits)) if waits else 0.0
 
+    def _count_moving(self, direction: Direction) -> int:
+        return sum(
+            1 for v in self.vehicles_ref
+            if v.direction == direction and v.state == VehicleState.MOVING
+        )
+
     def _pressure(self, direction: Direction) -> float:
-        return self._count_waiting(direction) * 1.0 + self._avg_wait(direction) * 0.5
+        # Pressure = (Waiting * 1.0) + (Moving * 0.5) + (AvgWait * 0.5)
+        # Moving cars contribute to pressure so we don't cut off a valid platoon.
+        waiting = self._count_waiting(direction)
+        moving = self._count_moving(direction)
+        avg_wait = self._avg_wait(direction)
+        return (waiting * 1.0) + (moving * 0.8) + (avg_wait * 0.5)
 
     def _ns_pressure(self) -> float:
         return self._pressure(Direction.NORTH) + self._pressure(Direction.SOUTH)
